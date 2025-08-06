@@ -234,37 +234,36 @@ const MenuComparison = ({ restaurant }) => {
           })
           .map(item => {
             const priceDiff = getPriceDifference(item.item);
-            const percentDiff = priceDiff.localPrice > 0
-              ? ((priceDiff.difference / priceDiff.localPrice) * 100).toFixed(1)
-              : null;
+            
             const isOverpay = priceDiff.difference > 0;
 
             return (
-              <div key={item.item} className="bg-white border rounded-xl shadow hover:shadow-lg transition p-5 flex flex-col gap-2">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-bold text-gray-800">{item.item}</h3>
-                  <span className={`px-2 py-1 rounded-full text-xs font-bold
-                    ${isOverpay ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                    {isOverpay ? 'Sur Glovo +' : 'Économie -'} {Math.abs(priceDiff.difference).toFixed(2)} DH
-                  </span>
+              <div
+                key={item.item}
+                className="rounded-xl overflow-hidden shadow-lg border border-[#e0e7ef] bg-white flex flex-col"
+              >
+                <div className="px-6 py-4 border-b bg-[#0F172A]">
+                  <h3 className="text-lg font-bold text-white">{item.item}</h3>
                 </div>
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-1">
-                    <span className="text-gray-500">🍴</span>
-                    <span className="font-semibold text-gray-700">{priceDiff.localPrice.toFixed(2)} DH</span>
-                    <span className="text-xs text-gray-400 ml-1">Sur place</span>
+                <div className="flex flex-col sm:flex-row items-stretch justify-between">
+                  <div className="flex-1 px-6 py-4 flex flex-col items-center justify-center border-r border-[#e0e7ef]">
+                    <span className="text-sm text-[#64748b] mb-1">Sur place</span>
+                    <span className="text-2xl font-bold text-[#0F172A]">{priceDiff.localPrice.toFixed(2)} DH</span>
+                    <span className="text-2xl">🍴</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-gray-500">🛵</span>
-                    <span className="font-semibold text-gray-700">{priceDiff.glovoPrice.toFixed(2)} DH</span>
-                    <span className="text-xs text-gray-400 ml-1">Glovo</span>
+                  <div className="flex-1 px-6 py-4 flex flex-col items-center justify-center">
+                    <span className="text-sm text-[#64748b] mb-1">Glovo</span>
+                    <span className="text-2xl font-bold text-[#0F172A]">{priceDiff.glovoPrice.toFixed(2)} DH</span>
+                    <span className="text-2xl">🛵</span>
                   </div>
                 </div>
-                {percentDiff && (
-                  <div className={`mt-1 text-xs font-semibold ${isOverpay ? 'text-red-500' : 'text-green-600'}`}>
-                    {isOverpay ? '↑' : '↓'} {percentDiff}% {isOverpay ? 'plus cher sur Glovo' : 'moins cher sur Glovo'}
-                  </div>
-                )}
+                <div className={`px-6 py-3 text-center font-semibold text-sm
+    ${isOverpay ? 'bg-[#fee2e2] text-[#b91c1c]' : 'bg-[#d1fae5] text-[#065f46]'}`}>
+                  {isOverpay
+                    ? <>Surpayez de {Math.abs(priceDiff.difference).toFixed(2)} DH</>
+                    : <>Économie de {Math.abs(priceDiff.difference).toFixed(2)} DH</>
+                  }
+                </div>
               </div>
             );
           })}
@@ -287,7 +286,7 @@ const MenuComparison = ({ restaurant }) => {
               >
                 {openCategory.name}
               </h2>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {openCategory.items.map(item => {
                   const priceDiff = getPriceDifference(item.item);
                   return (

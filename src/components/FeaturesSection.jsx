@@ -1,21 +1,23 @@
-const FeaturesSection = () =>  {
-    return (
-        <div className="py-16 bg-gray-100">
-  <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-8 px-4 text-center">
-    <div className="p-6 bg-white rounded-lg shadow">
-      <h3 className="text-xl font-semibold mb-2">Instant Results</h3>
-      <p>Get price comparison in seconds — no login or signup.</p>
+const FeaturesSection = () => (
+  <section id="features" className="py-16 bg-white">
+    <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-8 px-4">
+      <div className="p-8 bg-[#0F172A] rounded-2xl shadow-xl flex flex-col items-center hover:scale-105 transition-transform">
+        <span className="text-3xl mb-3">⚡</span>
+        <h3 className="text-xl font-bold mb-2 text-white">Résultats instantanés</h3>
+        <p className="text-base text-white/80 text-center">Obtenez la comparaison en quelques secondes.</p>
+      </div>
+      <div className="p-8 bg-[#38BDF8] rounded-2xl shadow-xl flex flex-col items-center hover:scale-105 transition-transform">
+        <span className="text-3xl mb-3">📊</span>
+        <h3 className="text-xl font-bold mb-2 text-[#0F172A]">Données fiables</h3>
+        <p className="text-base text-[#0F172A]/80 text-center">Menus mis à jour et vérifiés.</p>
+      </div>
+      <div className="p-8 bg-[#0F172A] rounded-2xl shadow-xl flex flex-col items-center hover:scale-105 transition-transform">
+        <span className="text-3xl mb-3">🛠️</span>
+        <h3 className="text-xl font-bold mb-2 text-white">Contribuez</h3>
+        <p className="text-base text-white/80 text-center">Signalez les menus manquants et aidez la communauté.</p>
+      </div>
     </div>
-    <div className="p-6 bg-white rounded-lg shadow">
-      <h3 className="text-xl font-semibold mb-2">Clean Data</h3>
-      <p>Menu data is up-to-date and accurate from real CSV sources.</p>
-    </div>
-    <div className="p-6 bg-white rounded-lg shadow">
-      <h3 className="text-xl font-semibold mb-2">Reports Option</h3>
-      <p>Missing menu? Submit it to improve the database for everyone.</p>
-    </div>
-  </div>
-</div>
-    );
-}
+  </section>
+);
+
 export default FeaturesSection;

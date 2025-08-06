@@ -11,7 +11,7 @@ const CitySelector = ({ cities, selectedCity, onSelectCity }) => {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-2 text-gray-700">Choose your city</h2>
+      <h2 className="text-xl font-semibold mb-2 text-gray-700">Choisissez votre ville</h2>
       <Select
         inputId="city"
         options={options}
@@ -19,7 +19,7 @@ const CitySelector = ({ cities, selectedCity, onSelectCity }) => {
         onChange={(option) => onSelectCity(option ? option.value : '')}
         isClearable
         isSearchable
-        placeholder="Type to search..."
+        placeholder="Tapez pour rechercher..."
         styles={{
           control: (base) => ({
             ...base,
@@ -27,17 +27,39 @@ const CitySelector = ({ cities, selectedCity, onSelectCity }) => {
             borderColor: '#d1d5db',
             borderRadius: '0.5rem',
             boxShadow: 'none',
+            backgroundColor: '#fff',
             '&:hover': {
-              borderColor: '#facc15',
+              borderColor: '#38BDF8',
             },
+          }),
+          option: (base, state) => ({
+            ...base,
+            color: '#0F172A',
+            backgroundColor: state.isSelected
+              ? '#38BDF8'
+              : state.isFocused
+              ? '#e0f2fe'
+              : '#fff',
+          }),
+          singleValue: (base) => ({
+            ...base,
+            color: '#0F172A',
+          }),
+          menu: (base) => ({
+            ...base,
+            backgroundColor: '#fff',
+          }),
+          placeholder: (base) => ({
+            ...base,
+            color: '#64748b',
           }),
         }}
         theme={(theme) => ({
           ...theme,
           colors: {
             ...theme.colors,
-            primary25: '#fef3c7',
-            primary: '#facc15',
+            primary25: '#e0f2fe',
+            primary: '#38BDF8',
           },
         })}
       />

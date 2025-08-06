@@ -15,7 +15,7 @@ const RestaurantSelector = ({
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-2 text-gray-700">Search restaurant</h2>
+      <h2 className="text-xl font-semibold mb-2 text-gray-700">Rechercher un restaurant</h2>
       <Select
         inputId="restaurant"
         options={options}
@@ -25,27 +25,49 @@ const RestaurantSelector = ({
         }
         isClearable
         isSearchable
-        placeholder="Type to search..."
+        placeholder="Tapez pour rechercher..."
         styles={{
-          control: (base) => ({
-            ...base,
-            padding: '6px 4px',
-            borderColor: '#d1d5db',
-            borderRadius: '0.5rem',
-            boxShadow: 'none',
-            '&:hover': {
-              borderColor: '#facc15',
-            },
-          }),
-        }}
-        theme={(theme) => ({
-          ...theme,
-          colors: {
-            ...theme.colors,
-            primary25: '#fef3c7',
-            primary: '#facc15',
-          },
-        })}
+    control: (base) => ({
+      ...base,
+      padding: '6px 4px',
+      borderColor: '#d1d5db',
+      borderRadius: '0.5rem',
+      boxShadow: 'none',
+      backgroundColor: '#fff',
+      '&:hover': {
+        borderColor: '#38BDF8',
+      },
+    }),
+    option: (base, state) => ({
+      ...base,
+      color: '#0F172A',
+      backgroundColor: state.isSelected
+        ? '#38BDF8'
+        : state.isFocused
+        ? '#e0f2fe'
+        : '#fff',
+    }),
+    singleValue: (base) => ({
+      ...base,
+      color: '#0F172A',
+    }),
+    menu: (base) => ({
+      ...base,
+      backgroundColor: '#fff',
+    }),
+    placeholder: (base) => ({
+      ...base,
+      color: '#64748b',
+    }),
+  }}
+  theme={(theme) => ({
+    ...theme,
+    colors: {
+      ...theme.colors,
+      primary25: '#e0f2fe',
+      primary: '#38BDF8',
+    },
+  })}
       />
     </div>
   );
