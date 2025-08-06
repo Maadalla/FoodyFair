@@ -93,24 +93,29 @@ const App = () => {
 
         {/* Step 3: Show Comparison (only after restaurant is selected) */}
         {selectedRestaurant && (
-          <div className="bg-white shadow-lg rounded-lg p-6">
-            <div className="sticky top-0 z-10 bg-white border-b py-2 flex justify-between items-center mb-4">
-              <button
-                className="bg-yellow-500 text-white px-4 py-2 rounded-full font-semibold shadow hover:bg-yellow-600 transition"
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              >
-                Check Another Restaurant
-              </button>
+          <div className="bg-white shadow-lg rounded-lg p-6 relative">
+            {/* Comparison Content */}
+            <div id="comparison" className="max-w-5xl mx-auto">
+              <MenuComparison restaurant={selectedRestaurant} />
+            </div>
+            {/* Bottom Action Bar */}
+            <div className="absolute left-0 bottom-0 w-full flex justify-between px-4 py-3">
               <a
                 href="#report-missing"
-                className="text-yellow-600 underline ml-4"
+                className="text-yellow-600 underline font-medium hover:text-yellow-700 transition"
               >
                 Report Missing Menu
               </a>
+              <button
+                className="bg-yellow-500 text-white px-4 py-2 rounded-full font-semibold shadow hover:bg-yellow-600 transition"
+                onClick={() => {
+                  setSelectedRestaurant('');
+                  document.getElementById('city-selector')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Check Another Restaurant
+              </button>
             </div>
-            <div id="comparison" className="max-w-5xl mx-auto">
-              <MenuComparison restaurant={selectedRestaurant} />
-            </div> 
           </div>
         )}
       </div>

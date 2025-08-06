@@ -70,29 +70,45 @@ const MenuComparison = ({ restaurant }) => {
   // Categorize items
   const categorizeItems = (items) => {
     const categories = {
+      pizzas: { name: "🍕 Pizzas", items: [] },
       burgers: { name: "🍔 Burgers", items: [] },
       tacos: { name: "🌮 Tacos", items: [] },
-      pizzas: { name: "🍕 Pizzas", items: [] },
-      salads: { name: "🥗 Salads", items: [] },
-      seafood: { name: "🐟 Seafood", items: [] },
-      pasta: { name: "🍝 Pasta", items: [] },
-      drinks: { name: "🥤 Drinks", items: [] },
-      kids: { name: "👶 Kids Menu", items: [] },
-      other: { name: "🍽️ Other", items: [] }
+      salades: { name: "🥗 Salades", items: [] },
+      sandwichs: { name: "🥪 Sandwichs", items: [] },
+      pâtes: { name: "🍝 Pâtes", items: [] },
+      viandes: { name: "🥩 Viandes", items: [] },
+      poissons: { name: "🐟 Poissons & Fruits de Mer", items: [] },
+      desserts: { name: "🍰 Desserts", items: [] },
+      boissons: { name: "🥤 Boissons", items: [] },
+      soupes: { name: "🍲 Soupes", items: [] },
+      crêpes: { name: "🥞 Crêpes", items: [] },
+      gaufres: { name: "🧇 Gaufres", items: [] },
+      sushis: { name: "🍣 Sushis", items: [] },
+      plats_asiatiques: { name: "🍜 Plats Asiatiques", items: [] },
+      enfants: { name: "👶 Menu Enfant", items: [] },
+      autres: { name: "🍽️ Autres", items: [] }
     };
 
     items.forEach(item => {
       const lowerItem = item.item.toLowerCase();
-      
-      if (lowerItem.includes('burger')) categories.burgers.items.push(item);
+
+      if (lowerItem.includes('pizza')) categories.pizzas.items.push(item);
+      else if (lowerItem.includes('burger')) categories.burgers.items.push(item);
       else if (lowerItem.includes('taco')) categories.tacos.items.push(item);
-      else if (lowerItem.includes('pizza')) categories.pizzas.items.push(item);
-      else if (lowerItem.includes('salad') || lowerItem.includes('salade')) categories.salads.items.push(item);
-      else if (lowerItem.includes('poisson') || lowerItem.includes('seafood') || lowerItem.includes('saumon')) categories.seafood.items.push(item);
-      else if (lowerItem.includes('patte') || lowerItem.includes('spaghetti')) categories.pasta.items.push(item);
-      else if (lowerItem.includes('boisson') || lowerItem.includes('soda') || lowerItem.includes('eau')) categories.drinks.items.push(item);
-      else if (lowerItem.includes('kids') || lowerItem.includes('enfant')) categories.kids.items.push(item);
-      else categories.other.items.push(item);
+      else if (lowerItem.includes('salade')) categories.salades.items.push(item);
+      else if (lowerItem.includes('sandwich')) categories.sandwichs.items.push(item);
+      else if (lowerItem.includes('pâte') || lowerItem.includes('pasta') || lowerItem.includes('spaghetti') || lowerItem.includes('lasagne') || lowerItem.includes('vermicelle') || lowerItem.includes('padthai')) categories.pâtes.items.push(item);
+      else if (lowerItem.includes('viande') || lowerItem.includes('boeuf') || lowerItem.includes('poulet') || lowerItem.includes('agneau') || lowerItem.includes('charcuterie') || lowerItem.includes('cordon bleu') || lowerItem.includes('nugget') || lowerItem.includes('brochette')) categories.viandes.items.push(item);
+      else if (lowerItem.includes('poisson') || lowerItem.includes('saumon') || lowerItem.includes('crevette') || lowerItem.includes('fruits de mer') || lowerItem.includes('dourade') || lowerItem.includes('loup bar')) categories.poissons.items.push(item);
+      else if (lowerItem.includes('dessert') || lowerItem.includes('tiramisu') || lowerItem.includes('panna cotta') || lowerItem.includes('fondant') || lowerItem.includes('nougat') || lowerItem.includes('salade fruit')) categories.desserts.items.push(item);
+      else if (lowerItem.includes('boisson') || lowerItem.includes('soda') || lowerItem.includes('eau') || lowerItem.includes('orangina') || lowerItem.includes('jus') || lowerItem.includes('coca')) categories.boissons.items.push(item);
+      else if (lowerItem.includes('soupe')) categories.soupes.items.push(item);
+      else if (lowerItem.includes('crêpe')) categories.crêpes.items.push(item);
+      else if (lowerItem.includes('gaufre')) categories.gaufres.items.push(item);
+      else if (lowerItem.includes('sushi')) categories.sushis.items.push(item);
+      else if (lowerItem.includes('asiatique') || lowerItem.includes('padthai') || lowerItem.includes('vermicelle') || lowerItem.includes('riz cantonnais')) categories.plats_asiatiques.items.push(item);
+      else if (lowerItem.includes('kids') || lowerItem.includes('enfant') || lowerItem.includes('mini')) categories.enfants.items.push(item);
+      else categories.autres.items.push(item);
     });
 
     return Object.entries(categories)
@@ -209,48 +225,49 @@ const MenuComparison = ({ restaurant }) => {
 
     {/* Search Results */}
     {searchTerm.trim() !== '' ? (
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredItems.length > 0 ? (
-          filteredItems.map(item => {
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredItems
+          .filter(item => {
             const priceDiff = getPriceDifference(item.item);
+            // Only show if both prices exist and are numbers
+            return priceDiff && typeof priceDiff.localPrice === 'number' && typeof priceDiff.glovoPrice === 'number';
+          })
+          .map(item => {
+            const priceDiff = getPriceDifference(item.item);
+            const percentDiff = priceDiff.localPrice > 0
+              ? ((priceDiff.difference / priceDiff.localPrice) * 100).toFixed(1)
+              : null;
+            const isOverpay = priceDiff.difference > 0;
+
             return (
-              <div key={item.item} className="bg-white border rounded-xl shadow-md hover:shadow-lg transition p-5 flex flex-col gap-2">
+              <div key={item.item} className="bg-white border rounded-xl shadow hover:shadow-lg transition p-5 flex flex-col gap-2">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-bold text-gray-800">{item.item}</h3>
-                  {priceDiff && (
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold
-                      ${priceDiff.difference > 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                      {priceDiff.difference > 0 ? 'Overpay' : 'Save'} {Math.abs(priceDiff.difference).toFixed(2)} DH
-                    </span>
-                  )}
+                  <span className={`px-2 py-1 rounded-full text-xs font-bold
+                    ${isOverpay ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                    {isOverpay ? 'Sur Glovo +' : 'Économie -'} {Math.abs(priceDiff.difference).toFixed(2)} DH
+                  </span>
                 </div>
                 <div className="flex items-center gap-4 text-sm">
                   <div className="flex items-center gap-1">
                     <span className="text-gray-500">🍴</span>
-                    <span className="font-semibold text-gray-700">{priceDiff?.localPrice?.toFixed(2) || 'N/A'} DH</span>
-                    <span className="text-xs text-gray-400 ml-1">In-store</span>
+                    <span className="font-semibold text-gray-700">{priceDiff.localPrice.toFixed(2)} DH</span>
+                    <span className="text-xs text-gray-400 ml-1">Sur place</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="text-gray-500">🛵</span>
-                    <span className="font-semibold text-gray-700">{priceDiff?.glovoPrice?.toFixed(2) || 'N/A'} DH</span>
+                    <span className="font-semibold text-gray-700">{priceDiff.glovoPrice.toFixed(2)} DH</span>
                     <span className="text-xs text-gray-400 ml-1">Glovo</span>
                   </div>
                 </div>
-                {priceDiff && (
-                  <div className="mt-1 text-xs text-gray-500">
-                    {priceDiff.localPrice > 0 && (
-                      <span>
-                        {priceDiff.difference > 0 ? '↑' : '↓'} {((priceDiff.difference / priceDiff.localPrice) * 100).toFixed(1)}% difference
-                      </span>
-                    )}
+                {percentDiff && (
+                  <div className={`mt-1 text-xs font-semibold ${isOverpay ? 'text-red-500' : 'text-green-600'}`}>
+                    {isOverpay ? '↑' : '↓'} {percentDiff}% {isOverpay ? 'plus cher sur Glovo' : 'moins cher sur Glovo'}
                   </div>
                 )}
               </div>
             );
-          })
-        ) : (
-          <p className="text-gray-500">No matching items found.</p>
-        )}
+          })}
       </div>
     ) : (
       // Category sections
