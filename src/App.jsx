@@ -8,7 +8,7 @@ import RestaurantSelector from './components/RestaurantSelector';
 import FAQSection from './components/FAQSection';
 import Footer from './components/Footer';
 import MenuComparison from './components/MenuComparison';
-
+import { Analytics } from "@vercel/analytics/next"
 const App = () => {
   const [cities, setCities] = useState([]);
   const [selectedCity, setSelectedCity] = useState('');
@@ -88,6 +88,7 @@ const App = () => {
       
       <FAQSection />
       <Footer />
+      <Analytics/>
     </div>
   );
 };
