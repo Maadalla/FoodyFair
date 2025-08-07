@@ -10,10 +10,11 @@ const CitySelector = ({ cities, selectedCity, onSelectCity }) => {
     options.find((opt) => opt.value === selectedCity) || null;
 
   return (
-    <div>
+    <div className="w-full">
       <h2 className="text-xl font-semibold mb-2 text-gray-700">Choisissez votre ville</h2>
       <Select
         inputId="city"
+        className="w-full"
         options={options}
         value={selectedOption}
         onChange={(option) => onSelectCity(option ? option.value : '')}

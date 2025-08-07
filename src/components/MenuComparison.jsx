@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import Fuse from 'fuse.js';
 
+const PRODUCTS_PER_PAGE = 6;
+
 const MenuComparison = ({ restaurant }) => {
   const [glovoMenu, setGlovoMenu] = useState([]);
   const [localMenu, setLocalMenu] = useState([]);
@@ -9,6 +11,7 @@ const MenuComparison = ({ restaurant }) => {
   const [error, setError] = useState(null);
   const [activeCategory, setActiveCategory] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
 
   // Load data
   useEffect(() => {
@@ -157,12 +160,33 @@ const MenuComparison = ({ restaurant }) => {
   // Filter categories based on search
   // (filteredCategories removed because it was unused)
 
-  const filteredItems = searchTerm.trim() !== ''
-  ? localMenu.filter(item =>
-      item.item.toLowerCase().includes(searchTerm.toLowerCase())
+  // 1. Filter items for display (must have price in both menus)
+  const displayableItems = (searchTerm.trim() !== ''
+    ? localMenu.filter(item =>
+        item.item.toLowerCase().includes(searchTerm.toLowerCase()))
+    : (
+      activeCategory
+        ? (localCategories.find(cat => cat.id === activeCategory)?.items || [])
+        : (localCategories[0]?.items || [])
     )
-  : [];
+  ).filter(item => {
+    const priceDiff = getPriceDifference(item.item);
+    return priceDiff && typeof priceDiff.localPrice === 'number' && typeof priceDiff.glovoPrice === 'number';
+  });
 
+  // 2. Pagination logic on filtered items
+  const totalPages = Math.ceil(displayableItems.length / PRODUCTS_PER_PAGE);
+  const paginatedItems = displayableItems.slice((page - 1) * PRODUCTS_PER_PAGE, page * PRODUCTS_PER_PAGE);
+
+  // 3. For category buttons, show only the count of displayable items
+  const getDisplayableCount = (cat) =>
+    cat.items.filter(item => {
+      const priceDiff = getPriceDifference(item.item);
+      return priceDiff && typeof priceDiff.localPrice === 'number' && typeof priceDiff.glovoPrice === 'number';
+    }).length;
+
+  // Reset to page 1 when filter changes
+  useEffect(() => { setPage(1); }, [searchTerm, activeCategory, restaurant]);
 
   if (loading) return (
     <div className="loading-spinner">
@@ -179,74 +203,64 @@ const MenuComparison = ({ restaurant }) => {
   );
 
   return (
-  <div className="max-w-6xl mx-auto px-4 py-8">
-    {/* Header */}
-    <header className="mb-6">
-      <h1 className="text-3xl font-bold mb-4 text-yellow-600">
-        {restaurant} Menu Comparison
-      </h1>
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Header */}
+      <header className="mb-6">
+        <h1 className="text-3xl font-bold mb-4 text-[#0F172A]">
+          {restaurant} Menu Comparison
+        </h1>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="🔍 Rechercher un plat..."
+            className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#38BDF8]"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-500"
+            >
+              ✖
+            </button>
+          )}
+        </div>
+      </header>
 
-      <div className="relative">
-        <input
-          type="text"
-          placeholder="🔍 Search menu items..."
-          className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        {searchTerm && (
-          <button
-            onClick={() => setSearchTerm('')}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-500"
-          >
-            ✖
-          </button>
-        )}
-      </div>
-    </header>
-
-    {/* Category Buttons (only shown if not searching) */}
-    
+      {/* Category Buttons */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {localCategories.map((category) => (
-          <button
-            key={category.id}
-            className={`px-4 py-2 text-sm rounded-full border transition-all 
-              ${activeCategory === category.id
-                ? 'bg-yellow-500 text-white border-yellow-500'
-                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-100'}`}
-            onClick={() => setActiveCategory(category.id)}
-          >
-            {category.name} ({category.items.length})
-          </button>
-        ))}
+        {localCategories
+          .filter(category => getDisplayableCount(category) > 0)
+          .map((category) => (
+            <button
+              key={category.id}
+              className={`px-4 py-2 text-sm rounded-full border transition-all 
+                ${activeCategory === category.id
+                  ? 'bg-[#38BDF8] text-white border-[#38BDF8]'
+                  : 'bg-white border-gray-300 text-[#0F172A] hover:bg-[#f1f5f9]'}`}
+              onClick={() => setActiveCategory(category.id)}
+            >
+              {category.name} ({getDisplayableCount(category)})
+            </button>
+          ))}
       </div>
-    
 
-    {/* Search Results */}
-    {searchTerm.trim() !== '' ? (
+      {/* Products Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredItems
-          .filter(item => {
+        {paginatedItems.map(item => {
             const priceDiff = getPriceDifference(item.item);
-            // Only show if both prices exist and are numbers
-            return priceDiff && typeof priceDiff.localPrice === 'number' && typeof priceDiff.glovoPrice === 'number';
-          })
-          .map(item => {
-            const priceDiff = getPriceDifference(item.item);
-            
             const isOverpay = priceDiff.difference > 0;
-
             return (
               <div
                 key={item.item}
                 className="rounded-xl overflow-hidden shadow-lg border border-[#e0e7ef] bg-white flex flex-col"
               >
                 <div className="px-6 py-4 border-b bg-[#0F172A]">
-                  <h3 className="text-lg font-bold text-white">{item.item}</h3>
+                  <h3 className="text-lg font-medium text-white">{item.item}</h3>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch justify-between">
-                  <div className="flex-1 px-6 py-4 flex flex-col items-center justify-center border-r border-[#e0e7ef]">
+                  <div className="flex-1 px-6 py-4 flex flex-col items-center justify-center border-b sm:border-b-0 sm:border-r border-[#e0e7ef]">
                     <span className="text-sm text-[#64748b] mb-1">Sur place</span>
                     <span className="text-2xl font-bold text-[#0F172A]">{priceDiff.localPrice.toFixed(2)} DH</span>
                     <span className="text-2xl">🍴</span>
@@ -258,7 +272,7 @@ const MenuComparison = ({ restaurant }) => {
                   </div>
                 </div>
                 <div className={`px-6 py-3 text-center font-semibold text-sm
-    ${isOverpay ? 'bg-[#fee2e2] text-[#b91c1c]' : 'bg-[#d1fae5] text-[#065f46]'}`}>
+                  ${isOverpay ? 'bg-[#fee2e2] text-[#b91c1c]' : 'bg-[#d1fae5] text-[#065f46]'}`}>
                   {isOverpay
                     ? <>Surpayez de {Math.abs(priceDiff.difference).toFixed(2)} DH</>
                     : <>Économie de {Math.abs(priceDiff.difference).toFixed(2)} DH</>
@@ -268,70 +282,31 @@ const MenuComparison = ({ restaurant }) => {
             );
           })}
       </div>
-    ) : (
-      // Category sections
-      <div className="space-y-8">
-        {(() => {
-          // Find the open category
-          const openCategory = activeCategory
-            ? localCategories.find(cat => cat.id === activeCategory)
-            : localCategories[0];
 
-          if (!openCategory) return null;
-
-          return (
-            <div key={openCategory.id} className="border-b pb-4">
-              <h2
-                className="text-2xl font-semibold mb-3 text-yellow-600"
-              >
-                {openCategory.name}
-              </h2>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {openCategory.items.map(item => {
-                  const priceDiff = getPriceDifference(item.item);
-                  return (
-                    <div key={item.item} className="bg-white border rounded-xl shadow-md hover:shadow-lg transition p-5 flex flex-col gap-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-lg font-bold text-gray-800">{item.item}</h3>
-                        {priceDiff && (
-                          <span className={`px-2 py-1 rounded-full text-xs font-bold
-                            ${priceDiff.difference > 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                            {priceDiff.difference > 0 ? 'Overpay' : 'Save'} {Math.abs(priceDiff.difference).toFixed(2)} DH
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1">
-                          <span className="text-gray-500">🍴</span>
-                          <span className="font-semibold text-gray-700">{priceDiff?.localPrice?.toFixed(2) || 'N/A'} DH</span>
-                          <span className="text-xs text-gray-400 ml-1">In-store</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-gray-500">🛵</span>
-                          <span className="font-semibold text-gray-700">{priceDiff?.glovoPrice?.toFixed(2) || 'N/A'} DH</span>
-                          <span className="text-xs text-gray-400 ml-1">Glovo</span>
-                        </div>
-                      </div>
-                      {priceDiff && (
-                        <div className="mt-1 text-xs text-gray-500">
-                          {priceDiff.localPrice > 0 && (
-                            <span>
-                              {priceDiff.difference > 0 ? '↑' : '↓'} {((priceDiff.difference / priceDiff.localPrice) * 100).toFixed(1)}% difference
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })()}
-      </div>
-    )}
-  </div>
-);
-
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-10">
+          <button
+            onClick={() => setPage(page - 1)}
+            disabled={page === 1}
+            className="px-4 py-2 rounded-full font-semibold bg-[#0F172A] text-white hover:bg-[#38BDF8] hover:text-[#0F172A] transition disabled:opacity-50"
+          >
+            Précédent
+          </button>
+          <span className="mx-2 text-lg font-medium text-[#0F172A]">
+            Page {page} / {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(page + 1)}
+            disabled={page === totalPages}
+            className="px-4 py-2 rounded-full font-semibold bg-[#0F172A] text-white hover:bg-[#38BDF8] hover:text-[#0F172A] transition disabled:opacity-50"
+          >
+            Suivant
+          </button>
+        </div>
+      )}
+    </div>
+  );
 };
+
 export default MenuComparison;

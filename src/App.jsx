@@ -58,12 +58,12 @@ const App = () => {
     <div className="min-h-screen bg-[#FFFFFF] font-inter">
       <Navbar scrollToComparison={scrollToComparison} />
       <HeroSection scrollToComparison={scrollToComparison} />
-      <section id="city-selector" className="py-16 bg-[#0F172A]">
+      <section id="city-selector" className="py-12 md:py-20 bg-[#0F172A] px-4">
         <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-center mb-6 text-[#0F172A]">
+          <h2 className="text-lg md:text-2xl font-medium text-[#0F172A] mb-6 text-center">
             Commencez la comparaison
           </h2>
-          <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col gap-4 md:flex-row md:gap-6">
             <CitySelector
               selectedCity={selectedCity}
               onSelectCity={setSelectedCity}
@@ -85,7 +85,9 @@ const App = () => {
         </section>
       )}
       <FeaturesSection />
-      
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* ...cards... */}
+      </div>
       <FAQSection />
       <Footer />
       <Analytics/>

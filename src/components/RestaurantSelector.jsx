@@ -14,7 +14,7 @@ const RestaurantSelector = ({
     options.find((opt) => opt.value === selectedRestaurant) || null;
 
   return (
-    <div>
+    <div className="w-full">
       <h2 className="text-xl font-semibold mb-2 text-gray-700">Rechercher un restaurant</h2>
       <Select
         inputId="restaurant"
@@ -26,6 +26,7 @@ const RestaurantSelector = ({
         isClearable
         isSearchable
         placeholder="Tapez pour rechercher..."
+        className="w-full"
         styles={{
     control: (base) => ({
       ...base,
