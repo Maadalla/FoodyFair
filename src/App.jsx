@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import Papa from 'papaparse';
+import { supabase } from './supabaseClient';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
 import FeaturesSection from './components/FeaturesSection';
@@ -9,38 +9,43 @@ import FAQSection from './components/FAQSection';
 import Footer from './components/Footer';
 import MenuComparison from './components/MenuComparison';
 import { Analytics } from "@vercel/analytics/react"
+
 const App = () => {
-  const [cities, setCities] = useState([]);
+  // Removed unused 'cities' state
   const [selectedCity, setSelectedCity] = useState('');
   const [restaurants, setRestaurants] = useState([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState('');
 
-  // Load cities.csv on first render
-  useEffect(() => {
-    Papa.parse('/data/cities.csv', {
-      download: true,
-      complete: (results) => {
-        const cityNames = results.data.flat().filter(Boolean);
-        setCities(cityNames);
-      },
-    });
-  }, []);
+  // Removed unused fetchCities useEffect
 
   // Load restaurants when city changes
   useEffect(() => {
-    if (!selectedCity) return;
-    const filename = `/data/restaurants/restaurant_${selectedCity.toLowerCase()}.csv`;
-    Papa.parse(filename, {
-      download: true,
-      complete: (results) => {
-        const names = results.data.flat().filter(Boolean);
-        setRestaurants(names);
-      },
-      error: (err) => {
-        console.error('Error loading restaurant file:', err);
+    const fetchRestaurants = async () => {
+      if (!selectedCity) {
         setRestaurants([]);
-      },
-    });
+        return;
+      }
+      try {
+        const { data: cityData, error: cityError } = await supabase
+          .from('cities')
+          .select('id')
+          .eq('name', selectedCity)
+          .single();
+        if (cityError) throw cityError;
+
+        const { data: restaurantsData, error: restaurantsError } = await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('city_id', cityData.id);
+        if (restaurantsError) throw restaurantsError;
+
+        setRestaurants(restaurantsData.map(r => r.name));
+      } catch (error) {
+        console.error(error);
+        setRestaurants([]);
+      }
+    };
+    fetchRestaurants();
   }, [selectedCity]);
 
   // Scrolls the comparison section to the middle of the viewport
@@ -67,7 +72,6 @@ const App = () => {
             <CitySelector
               selectedCity={selectedCity}
               onSelectCity={setSelectedCity}
-              cities={cities}
             />
             <RestaurantSelector
               selectedRestaurant={selectedRestaurant}

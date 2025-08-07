@@ -1,73 +1,52 @@
 import { useState, useEffect } from 'react';
-import Papa from 'papaparse';
+import { supabase } from '../supabaseClient';
 import Fuse from 'fuse.js';
 
 const PRODUCTS_PER_PAGE = 6;
 
 const MenuComparison = ({ restaurant }) => {
-  const [glovoMenu, setGlovoMenu] = useState([]);
-  const [localMenu, setLocalMenu] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeCategory, setActiveCategory] = useState(null);
+  const [localMenu, setLocalMenu] = useState([]);
+  const [glovoMenu, setGlovoMenu] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeCategory, setActiveCategory] = useState('');
   const [page, setPage] = useState(1);
 
-  // Load data
+  // Fetch menus from Supabase
   useEffect(() => {
-    if (!restaurant) return;
+    const fetchMenus = async () => {
+      if (!restaurant) return;
+      setLoading(true);
+      setError(null);
+      try {
+        // Get restaurant id
+        const { data: restData, error: restError } = await supabase
+          .from('restaurants')
+          .select('id')
+          .eq('name', restaurant)
+          .single();
+        if (restError || !restData) throw restError || new Error('Restaurant not found');
 
-    setLoading(true);
-    setError(null);
+        // Fetch all menu items for this restaurant
+        const { data, error } = await supabase
+          .from('menus')
+          .select('*')
+          .eq('restaurant_id', restData.id);
 
-    const loadCSV = async (path) => {
-  return new Promise((resolve) => {
-    Papa.parse(path, {
-      download: true,
-      header: false,
-      skipEmptyLines: true,
-      complete: (results) => {
-        if (!results?.data || results.data.length === 0) {
-          console.warn(`CSV ${path} has no data`);
-          resolve([]);
-          return;
-        }
+        if (error) throw error;
 
-        const items = results.data
-          .filter(row => Array.isArray(row) && row.length >= 2)
-          .map(row => {
-            const item = row[0]?.toString().trim().replace(/\u00A0/g, ''); // remove non-breaking space
-            const price = row[1]?.toString().trim().replace(/\u00A0/g, '');
-            return { item, price };
-          });
-
-        console.log(`✅ Loaded ${path}`, items);
-        resolve(items);
-      },
-      error: (err) => {
-        console.error(`❌ Failed to load ${path}`, err);
-        resolve([]);
+        setLocalMenu(data.filter(item => item.source === 'restaurant'));
+        setGlovoMenu(data.filter(item => item.source === 'glovo'));
+      } catch {
+        setError('Could not load menu items');
+        setLocalMenu([]);
+        setGlovoMenu([]);
+      } finally {
+        setLoading(false);
       }
-    });
-  });
-};
-
-
-    Promise.all([
-      loadCSV(`/data/restaurant_menus/restaurant_menus_${restaurant.toLowerCase().replace(/[^\w]/g, '')}.csv`),
-      loadCSV(`/data/glovo_menus/glovo_menus_${restaurant.toLowerCase().replace(/[^\w]/g, '')}.csv`)
-    ]).then(([local, glovo]) => {
-      if (local.length === 0 || glovo.length === 0) {
-        setError('Menu data not found or empty');
-      }
-      setLocalMenu(local);
-      setGlovoMenu(glovo);
-      setLoading(false);
-    }).catch(err => {
-      console.error('Loading error:', err);
-      setError('Failed to load menu data');
-      setLoading(false);
-    });
+    };
+    fetchMenus();
   }, [restaurant]);
 
   // Categorize items
@@ -121,15 +100,12 @@ const MenuComparison = ({ restaurant }) => {
 
   const localCategories = categorizeItems(localMenu);
 
-  // Find price difference for an item
+  // Fuzzy match: for each local item, find best glovo match
+  const fuseGlovo = new Fuse(glovoMenu, { keys: ['item'], threshold: 0.4 });
+
+  // Find price difference for an item (by fuzzy match)
   const getPriceDifference = (itemName) => {
-    const fuse = new Fuse(glovoMenu, { 
-      keys: ['item'], 
-      threshold: 0.4,
-      includeScore: true
-    });
-    
-    const [bestMatch] = fuse.search(itemName);
+    const [bestMatch] = fuseGlovo.search(itemName);
     if (!bestMatch) return null;
 
     const localItem = localMenu.find(i => i.item === itemName);
@@ -151,14 +127,12 @@ const MenuComparison = ({ restaurant }) => {
     if (!priceStr) return 0;
     const numeric = parseFloat(
       priceStr
+        .toString()
         .replace(/[^\d,.]/g, '')
         .replace(',', '.')
     );
     return isNaN(numeric) ? 0 : numeric;
   };
-
-  // Filter categories based on search
-  // (filteredCategories removed because it was unused)
 
   // 1. Filter items for display (must have price in both menus)
   const displayableItems = (searchTerm.trim() !== ''
@@ -187,6 +161,7 @@ const MenuComparison = ({ restaurant }) => {
 
   // Reset to page 1 when filter changes
   useEffect(() => { setPage(1); }, [searchTerm, activeCategory, restaurant]);
+  useEffect(() => { setActiveCategory(''); }, [localMenu, glovoMenu]);
 
   if (loading) return (
     <div className="loading-spinner">
@@ -201,6 +176,23 @@ const MenuComparison = ({ restaurant }) => {
       <p>Please try another restaurant or check back later.</p>
     </div>
   );
+
+  if (!loading && !error && displayableItems.length === 0 && searchTerm.trim() !== '') {
+    return (
+      <div className="text-center text-gray-500 py-12">
+        <p>Aucun plat trouvé pour votre recherche.</p>
+      </div>
+    );
+  }
+
+  if (!loading && !error && localCategories.length === 0) {
+    return (
+      <div className="text-center text-gray-500 py-12">
+        <p>Aucun plat comparable trouvé pour ce restaurant.</p>
+        <p>Essayez un autre restaurant ou vérifiez les menus.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -274,8 +266,8 @@ const MenuComparison = ({ restaurant }) => {
                 <div className={`px-6 py-3 text-center font-semibold text-sm
                   ${isOverpay ? 'bg-[#fee2e2] text-[#b91c1c]' : 'bg-[#d1fae5] text-[#065f46]'}`}>
                   {isOverpay
-                    ? <>Surpayez de {Math.abs(priceDiff.difference).toFixed(2)} DH</>
-                    : <>Économie de {Math.abs(priceDiff.difference).toFixed(2)} DH</>
+                    ? <>Vous payez {Math.abs(priceDiff.difference).toFixed(2)} DH de plus sur Glovo</>
+                    : <>Vous payez {Math.abs(priceDiff.difference).toFixed(2)} DH de moins sur Glovo</>
                   }
                 </div>
               </div>
