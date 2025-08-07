@@ -9,7 +9,7 @@ import FAQSection from './components/FAQSection';
 import Footer from './components/Footer';
 import MenuComparison from './components/MenuComparison';
 import { Analytics } from "@vercel/analytics/react"
-
+import { SpeedInsights } from "@vercel/speed-insights/react"
 const App = () => {
   // Removed unused 'cities' state
   const [selectedCity, setSelectedCity] = useState('');
@@ -95,6 +95,7 @@ const App = () => {
       <FAQSection />
       <Footer />
       <Analytics/>
+      <SpeedInsights/>
     </div>
   );
 };
